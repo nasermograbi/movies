@@ -37,6 +37,7 @@ In the terminal that opens:
 | `npm run ios` / `npm run android` | Start it and open a simulator or emulator |
 | `npm run typecheck`               | Type-check with TypeScript (strict mode)  |
 | `npm run lint`                    | Lint with Expo's ESLint config            |
+| `npm test`                        | Run the unit tests with Jest              |
 
 ## Note on the API key
 
