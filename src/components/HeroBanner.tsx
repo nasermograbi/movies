@@ -6,11 +6,11 @@ import {
   View,
 } from "react-native";
 
-import { Backdrop } from "../components/Backdrop";
-import { Skeleton } from "../components/Skeleton";
-import { StateView } from "../components/StateView";
 import { colors, spacing, typography } from "../theme";
 import type { MovieDetails } from "../types";
+import { Backdrop } from "./Backdrop";
+import { Skeleton } from "./Skeleton";
+import { StateView } from "./StateView";
 
 type Props = {
   movie: MovieDetails | undefined;

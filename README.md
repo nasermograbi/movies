@@ -39,6 +39,32 @@ In the terminal that opens:
 | `npm run lint`                    | Lint with Expo's ESLint config            |
 | `npm test`                        | Run the unit tests with Jest              |
 
-## Note on the API key
+## How it's built
 
-Expo copies any variable prefixed `EXPO_PUBLIC_` into the app bundle, so the key is readable by anyone with the app. That's acceptable for a public, free OMDb key. A production app would call OMDb through its own backend and keep the key on the server.
+```
+src/
+  api/          http.ts → omdb.ts → queries.ts
+  components/   presentational: props in, no data fetching
+  screens/      connect the query hooks to components
+  navigation/   the stack and its typed params
+  homeRows.ts   the rows on the home screen
+  theme.ts      colors, spacing, typography
+  types.ts      the app's own Movie and MovieDetails types
+```
+
+Data flows in one direction:
+
+1. `http.ts` fetches JSON and throws `ApiError` on failure. It knows nothing about movies.
+2. `omdb.ts` handles OMDb's quirks and maps its JSON into the app's types. For example, `"N/A"` means a missing value, numbers arrive as strings, and errors can come back with HTTP 200.
+3. `queries.ts` wraps those functions in TanStack Query hooks, which handle caching, retries, paging and cancellation.
+4. Screens call the hooks and pass plain data to components.
+
+To add a screen, add a route in `navigation/` and a file in `screens/` that reuses the existing hooks and components.
+
+## Decisions and tradeoffs
+
+- **The home rows are searches.** OMDb has no genre or trending endpoints, so each row in `homeRows.ts` is a search query.
+- **FlatList, not FlashList.** Each row holds a few dozen posters, so the built-in list is fast enough. FlashList is the next step for much longer lists.
+- **The HD poster is a URL trick.** OMDb only returns 380px posters. The hero and details screen request a 1000px version by changing the image URL. The small poster shows while it loads.
+- **The API key is in the app bundle.** Expo copies any variable prefixed `EXPO_PUBLIC_` into the app, so anyone with the app can read the key. That's acceptable for a free OMDb key. A production app would call OMDb through its own backend and keep the key on the server.
+- **Tests cover the API layer.** That's where the logic that could break lives: mapping, error handling and paging.

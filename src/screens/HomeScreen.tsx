@@ -7,12 +7,12 @@ import {
   useMovieSearch,
   useRefreshMovies,
 } from "../api/queries";
+import { HeroBanner } from "../components/HeroBanner";
 import { MovieRow } from "../components/MovieRow";
 import { FEATURED_MOVIE_ID, HOME_ROWS, type HomeRowConfig } from "../homeRows";
 import type { RootStackScreenProps } from "../navigation/types";
 import { colors, spacing, typography } from "../theme";
 import type { Movie } from "../types";
-import { HeroBanner } from "./HeroBanner";
 
 export function HomeScreen({ navigation }: RootStackScreenProps<"Home">) {
   const insets = useSafeAreaInsets();
