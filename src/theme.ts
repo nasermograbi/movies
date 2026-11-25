@@ -6,6 +6,7 @@ export const colors = {
   text: "#FFFFFF",
   textMuted: "#A1A1AA",
   accent: "#E5383B",
+  rating: "#F5C518",
 };
 
 export const spacing = {

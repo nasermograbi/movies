@@ -1,8 +1,13 @@
-import { Image } from "expo-image";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 import { useMovieDetails } from "../api/queries";
-import { POSTER_HEIGHT, POSTER_WIDTH } from "../components/PosterCard";
+import { Backdrop } from "../components/Backdrop";
 import { StateView } from "../components/StateView";
 import type { RootStackScreenProps } from "../navigation/types";
 import { colors, spacing, typography } from "../theme";
@@ -10,6 +15,7 @@ import { colors, spacing, typography } from "../theme";
 export function MovieDetailsScreen({
   route,
 }: RootStackScreenProps<"MovieDetails">) {
+  const { width } = useWindowDimensions();
   const {
     data: movie,
     error,
@@ -27,32 +33,42 @@ export function MovieDetailsScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        {movie.posterUrl !== null && (
-          <Image
-            source={movie.posterUrl}
-            style={styles.poster}
-            contentFit="cover"
-            transition={200}
-          />
-        )}
-        <View style={styles.headerText}>
-          <Text style={typography.title}>{movie.title}</Text>
-          <Text style={typography.caption}>{meta}</Text>
-          {movie.imdbRating !== null && (
-            <Text style={styles.rating}>
-              ★ {movie.imdbRating.toFixed(1)} IMDb
-            </Text>
-          )}
-        </View>
-      </View>
+      <Backdrop
+        imageUrl={movie.posterUrlLarge}
+        placeholderUrl={movie.posterUrl}
+        height={Math.min(width * 1.2, 520)}
+      >
+        <Text style={typography.title}>{movie.title}</Text>
+        <Text style={styles.meta}>{meta}</Text>
+      </Backdrop>
 
-      {movie.genres.length > 0 && (
-        <Text style={typography.caption}>{movie.genres.join(", ")}</Text>
-      )}
-      {movie.plot !== null && <Text style={typography.body}>{movie.plot}</Text>}
-      <Credit label="Director" value={movie.director} />
-      <Credit label="Cast" value={movie.actors.join(", ")} />
+      <View style={styles.body}>
+        {movie.imdbRating !== null && (
+          <Text
+            style={styles.rating}
+            accessibilityLabel={`IMDb rating ${movie.imdbRating} out of 10`}
+          >
+            ★ {movie.imdbRating.toFixed(1)}
+            <Text style={styles.ratingScale}> / 10 IMDb</Text>
+          </Text>
+        )}
+
+        {movie.genres.length > 0 && (
+          <View style={styles.chips}>
+            {movie.genres.map((genre) => (
+              <View key={genre} style={styles.chip}>
+                <Text style={styles.chipText}>{genre}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {movie.plot !== null && (
+          <Text style={typography.body}>{movie.plot}</Text>
+        )}
+        <Credit label="Director" value={movie.director} />
+        <Credit label="Cast" value={movie.actors.join(", ")} />
+      </View>
     </ScrollView>
   );
 }
@@ -69,26 +85,38 @@ function Credit({ label, value }: { label: string; value: string | null }) {
 
 const styles = StyleSheet.create({
   content: {
-    gap: spacing.md,
-    padding: spacing.md,
     paddingBottom: spacing.xl,
   },
-  header: {
-    flexDirection: "row",
+  meta: {
+    ...typography.caption,
+    color: colors.text,
+  },
+  body: {
     gap: spacing.md,
-  },
-  poster: {
-    width: POSTER_WIDTH,
-    height: POSTER_HEIGHT,
-    borderRadius: 6,
-  },
-  headerText: {
-    flex: 1,
-    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   rating: {
-    ...typography.body,
-    fontWeight: "700",
+    ...typography.heading,
+    color: colors.rating,
+  },
+  ratingScale: {
+    ...typography.caption,
+  },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+  },
+  chipText: {
+    ...typography.caption,
+    color: colors.text,
   },
   label: {
     color: colors.textMuted,

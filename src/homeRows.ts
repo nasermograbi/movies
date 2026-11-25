@@ -10,3 +10,5 @@ export const HOME_ROWS = [
 ];
 
 export type HomeRowConfig = (typeof HOME_ROWS)[number];
+
+export const FEATURED_MOVIE_ID = "tt15239678"; // Dune: Part Two

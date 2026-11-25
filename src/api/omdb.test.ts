@@ -44,6 +44,7 @@ describe("mapping", () => {
       title: "The Dark Knight",
       year: "2008",
       posterUrl: "https://example.com/poster.jpg",
+      posterUrlLarge: "https://example.com/poster.jpg",
       rated: "PG-13",
       runtime: "152 min",
       genres: ["Action", "Crime", "Drama"],
@@ -65,11 +66,23 @@ describe("mapping", () => {
     });
 
     expect(details.posterUrl).toBeNull();
+    expect(details.posterUrlLarge).toBeNull();
     expect(details.rated).toBeNull();
     expect(details.genres).toEqual([]);
     expect(details.plot).toBeNull();
     expect(details.imdbRating).toBeNull();
     expect(toMovie({ ...darkKnight, Poster: "N/A" }).posterUrl).toBeNull();
+  });
+
+  it("asks the poster host for a 1000px poster", () => {
+    const details = toMovieDetails({
+      ...darkKnight,
+      Poster: "https://m.media-amazon.com/images/M/abc@._V1_QL75_UX380_.jpg",
+    });
+
+    expect(details.posterUrlLarge).toBe(
+      "https://m.media-amazon.com/images/M/abc@._V1_SX1000.jpg",
+    );
   });
 });
 
@@ -81,20 +94,36 @@ describe("requests", () => {
       totalResults: "1",
     });
 
-    await expect(searchMovies("batman")).resolves.toEqual([
-      toMovie(darkKnight),
-    ]);
+    await expect(searchMovies("batman", 1)).resolves.toEqual({
+      movies: [toMovie(darkKnight)],
+      nextPage: undefined,
+    });
 
     const url = String(fetchSpy.mock.calls[0][0]);
     expect(url).toContain("s=batman");
     expect(url).toContain("type=movie");
+    expect(url).toContain("page=1");
     expect(url).toContain("apikey=test-key");
+  });
+
+  it("returns the next page until all results are loaded", async () => {
+    const results = { Response: "True", Search: [], totalResults: "25" };
+
+    mockFetch(200, results);
+    await expect(searchMovies("batman", 2)).resolves.toMatchObject({
+      nextPage: 3,
+    });
+
+    mockFetch(200, results);
+    await expect(searchMovies("batman", 3)).resolves.toMatchObject({
+      nextPage: undefined,
+    });
   });
 
   it('throws OMDb\'s message when it answers HTTP 200 with Response "False"', async () => {
     mockFetch(200, { Response: "False", Error: "Movie not found!" });
 
-    await expect(searchMovies("zzzz")).rejects.toThrow(
+    await expect(searchMovies("zzzz", 1)).rejects.toThrow(
       new ApiError("Movie not found!"),
     );
   });
@@ -119,7 +148,7 @@ describe("requests", () => {
     delete process.env.EXPO_PUBLIC_OMDB_API_KEY;
     const fetchSpy = mockFetch(200, {});
 
-    await expect(searchMovies("batman")).rejects.toThrow(
+    await expect(searchMovies("batman", 1)).rejects.toThrow(
       "Missing EXPO_PUBLIC_OMDB_API_KEY",
     );
     expect(fetchSpy).not.toHaveBeenCalled();

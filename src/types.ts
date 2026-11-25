@@ -6,6 +6,7 @@ export type Movie = {
 };
 
 export type MovieDetails = Movie & {
+  posterUrlLarge: string | null;
   rated: string | null;
   runtime: string | null;
   genres: string[];
@@ -13,4 +14,9 @@ export type MovieDetails = Movie & {
   actors: string[];
   plot: string | null;
   imdbRating: number | null;
+};
+
+export type MoviePage = {
+  movies: Movie[];
+  nextPage?: number;
 };

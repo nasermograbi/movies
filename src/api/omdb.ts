@@ -1,4 +1,4 @@
-import type { Movie, MovieDetails } from "../types";
+import type { Movie, MovieDetails, MoviePage } from "../types";
 import { ApiError, getJson } from "./http";
 
 const BASE_URL = "https://www.omdbapi.com/";
@@ -24,15 +24,22 @@ export type OmdbMovie = OmdbSearchItem & {
   imdbRating: string;
 };
 
+const PAGE_SIZE = 10;
+
 export async function searchMovies(
   query: string,
+  page: number,
   signal?: AbortSignal,
-): Promise<Movie[]> {
+): Promise<MoviePage> {
   const data = await request<OmdbSearchResponse>(
-    { s: query, type: "movie" },
+    { s: query, type: "movie", page: String(page) },
     signal,
   );
-  return data.Search.map(toMovie);
+  const hasMore = page * PAGE_SIZE < Number(data.totalResults);
+  return {
+    movies: data.Search.map(toMovie),
+    nextPage: hasMore ? page + 1 : undefined,
+  };
 }
 
 export async function getMovieDetails(
@@ -95,10 +102,17 @@ export function toMovie(raw: OmdbSearchItem): Movie {
   };
 }
 
+// OMDb posters are 380px; the image host serves 1000px when the "._V1_" suffix changes.
+// shortcut: relies on the host's URL format, other URLs keep the small poster.
+const toLargePoster = (url: string | null): string | null =>
+  url?.includes("._V1_") ? `${url.split("._V1_")[0]}._V1_SX1000.jpg` : url;
+
 export function toMovieDetails(raw: OmdbMovie): MovieDetails {
+  const movie = toMovie(raw);
   const rating = parseFloat(raw.imdbRating);
   return {
-    ...toMovie(raw),
+    ...movie,
+    posterUrlLarge: toLargePoster(movie.posterUrl),
     rated: orNull(raw.Rated),
     runtime: orNull(raw.Runtime),
     genres: toList(raw.Genre),

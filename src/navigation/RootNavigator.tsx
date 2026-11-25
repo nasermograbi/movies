@@ -12,12 +12,12 @@ export function RootNavigator() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: "ExWo Movies" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="MovieDetails"
         component={MovieDetailsScreen}
-        options={{ title: "" }}
+        options={{ title: "", headerTransparent: true }}
       />
     </Stack.Navigator>
   );

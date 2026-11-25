@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 import { colors, spacing, typography } from "../theme";
@@ -13,6 +14,10 @@ type Props = {
 };
 
 export function PosterCard({ movie, onPress }: Props) {
+  // Some OMDb poster links are dead (404), so fall back to the title.
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = movie.posterUrl !== null && !imageFailed;
+
   return (
     <Pressable
       onPress={() => onPress(movie)}
@@ -20,12 +25,13 @@ export function PosterCard({ movie, onPress }: Props) {
       accessibilityLabel={`${movie.title} (${movie.year})`}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
-      {movie.posterUrl ? (
+      {showImage ? (
         <Image
           source={movie.posterUrl}
           style={styles.poster}
           contentFit="cover"
           transition={200}
+          onError={() => setImageFailed(true)}
         />
       ) : (
         <Text style={styles.fallbackTitle} numberOfLines={4}>
